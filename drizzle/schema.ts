@@ -1,28 +1,20 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
-  id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
-  name: text("name"),
-  email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  id: int("id").autoincrement().primaryKey(), openId: varchar("openId", { length: 64 }).notNull().unique(), name: text("name"), email: varchar("email", { length: 320 }), loginMethod: varchar("loginMethod", { length: 64 }), role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
+export type User = typeof users.$inferSelect; export type InsertUser = typeof users.$inferInsert;
 
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+export const districts = mysqlTable("districts", { id: int("id").autoincrement().primaryKey(), name: varchar("name", { length: 120 }).notNull(), province: varchar("province", { length: 120 }).notNull(), riskScore: int("riskScore").notNull().default(0), riskLevel: mysqlEnum("riskLevel", ["stable", "watch", "elevated", "high"]).notNull().default("stable"), latitude: decimal("latitude", { precision: 10, scale: 7 }), longitude: decimal("longitude", { precision: 10, scale: 7 }), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() });
+export type District = typeof districts.$inferSelect;
 
-// TODO: Add your tables here
+export const alerts = mysqlTable("alerts", { id: int("id").autoincrement().primaryKey(), code: varchar("code", { length: 32 }).notNull().unique(), title: varchar("title", { length: 220 }).notNull(), body: text("body").notNull(), disasterType: varchar("disasterType", { length: 64 }).notNull(), severity: mysqlEnum("severity", ["info", "action", "urgent", "critical"]).notNull(), affectedAreas: text("affectedAreas").notNull(), recommendedActions: text("recommendedActions").notNull(), status: mysqlEnum("status", ["draft", "published", "resolved"]).notNull().default("draft"), publishedBy: int("publishedBy"), publishedAt: timestamp("publishedAt"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() });
+export type Alert = typeof alerts.$inferSelect;
+
+export const incidents = mysqlTable("incidents", { id: int("id").autoincrement().primaryKey(), reporterId: int("reporterId").notNull(), disasterType: varchar("disasterType", { length: 64 }).notNull(), location: varchar("location", { length: 240 }).notNull(), latitude: decimal("latitude", { precision: 10, scale: 7 }), longitude: decimal("longitude", { precision: 10, scale: 7 }), severity: mysqlEnum("severity", ["moderate", "high", "critical"]).notNull(), description: text("description").notNull(), contactDetails: varchar("contactDetails", { length: 160 }), status: mysqlEnum("status", ["submitted", "reviewing", "verified", "resolved", "rejected"]).notNull().default("submitted"), reviewedBy: int("reviewedBy"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() });
+export type Incident = typeof incidents.$inferSelect;
+
+export const preparednessResources = mysqlTable("preparednessResources", { id: int("id").autoincrement().primaryKey(), title: varchar("title", { length: 180 }).notNull(), disasterType: varchar("disasterType", { length: 64 }).notNull(), summary: text("summary").notNull(), body: text("body").notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() });
+export const emergencyContacts = mysqlTable("emergencyContacts", { id: int("id").autoincrement().primaryKey(), label: varchar("label", { length: 120 }).notNull(), number: varchar("number", { length: 32 }).notNull(), description: varchar("description", { length: 180 }).notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() });
+export const notifications = mysqlTable("notifications", { id: int("id").autoincrement().primaryKey(), userId: int("userId").notNull(), title: varchar("title", { length: 180 }).notNull(), body: text("body").notNull(), kind: varchar("kind", { length: 64 }).notNull(), readAt: timestamp("readAt"), createdAt: timestamp("createdAt").defaultNow().notNull() });
+export const externalDataSnapshots = mysqlTable("externalDataSnapshots", { id: int("id").autoincrement().primaryKey(), source: varchar("source", { length: 120 }).notNull(), category: varchar("category", { length: 64 }).notNull(), payload: text("payload").notNull(), observedAt: timestamp("observedAt").notNull(), createdAt: timestamp("createdAt").defaultNow().notNull() });
